@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SFA Agrotech: Oil Palm FFB Growth & Derivative Simulator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons (Inline SVGs preferred but dynamic script is handy) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- MathJax CDN for LaTeX rendering -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-emerald-800 text-white shadow-md border-b border-emerald-900 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-600 p-2 rounded-lg text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">SFA: Agrotech Bioscience Dashboard</h1>
+                    <p class="text-xs text-emerald-200">Real-time Derivative $f'(x)$ Analysis in Crop Physiology</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 bg-emerald-900 px-4 py-2 rounded-full border border-emerald-700">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-xs font-semibold text-emerald-100">Malaysia Oil Palm Research Model</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Welcome banner and intro -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 flex flex-col md:flex-row gap-6 items-start md:items-center">
+            <div class="md:w-2/3">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 mb-3">
+                    Coursework Practical Aid: Agrotechnology (SFA)
+                </span>
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">How Do We Calculate Real-Time Yield Accumulation?</h2>
+                <p class="text-slate-600 text-sm leading-relaxed">
+                    In agrotechnology, understanding the physiological maturity of crops is crucial for optimizing harvest cycles and logistical operations. 
+                    Using a mathematical growth model, we can apply <strong>calculus derivatives</strong> ($f'(x)$) to analyze the weight accumulation rate of 
+                    <strong>Elaeis guineensis</strong> (Oil Palm) Fresh Fruit Bunches (FFB). This simulator maps a logistic growth curve to biological periods 
+                    observed in typical Malaysian estates, enabling precise harvest forecasting.
+                </p>
+            </div>
+            <div class="md:w-1/3 bg-emerald-50 rounded-xl p-4 border border-emerald-100 self-stretch flex flex-col justify-between">
+                <h3 class="text-xs font-semibold text-emerald-900 uppercase tracking-wider">Malaysian Data Context</h3>
+                <p class="text-xs text-emerald-800 leading-relaxed my-2">
+                    Our standard benchmarks are inspired by physiological publications of the 
+                    <span class="font-semibold">Malaysian Palm Oil Board (MPOB)</span> and the 
+                    <span class="font-semibold">Malaysian Agricultural Research and Development Institute (MARDI)</span> on <em>DxP</em> (Deli x Pisifera) oil palm hybrids.
+                </p>
+                <div class="text-[10px] text-emerald-700 italic border-t border-emerald-200 pt-2 mt-1">
+                    Sources: <a href="https://mpob.gov.my" target="_blank" class="underline hover:text-emerald-900">mpob.gov.my</a> | <a href="https://mardi.gov.my" target="_blank" class="underline hover:text-emerald-900">mardi.gov.my</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Side: Mathematical Model & Sliders -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                
+                <!-- Bioscience Equation Section -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        The Physiological Growth Formula
+                    </h3>
+                    
+                    <p class="text-sm text-slate-600 mb-4">
+                        The cumulative weight gain of an oil palm Fresh Fruit Bunch is modeled using a <strong>Logistic Growth Curve</strong>, $f(t)$.
+                        Its first derivative, $f'(t)$, computes the rate of weight accumulation (kg/week).
+                    </p>
+
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-4 space-y-4">
+                        <div>
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Cumulative Weight $f(t)$ [kg]</span>
+                            <div class="text-center bg-white p-2.5 rounded-lg border border-slate-200/50 shadow-inner overflow-x-auto text-slate-900">
+                                $$f(t) = \frac{L}{1 + e^{-k(t - t_0)}}$$
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Derivative Rate of Growth $f'(t)$ [kg/week]</span>
+                            <div class="text-center bg-white p-2.5 rounded-lg border border-slate-200/50 shadow-inner overflow-x-auto text-slate-900">
+                                $$f'(t) = \frac{L \cdot k \cdot e^{-k(t - t_0)}}{\left(1 + e^{-k(t - t_0)}\right)^2}$$
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-xs text-slate-500 grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                        <div><strong>$t$</strong> : Weeks post-anthesis (0 to 22)</div>
+                        <div><strong>$L$</strong> : Max asymptotic bunch weight (kg)</div>
+                        <div><strong>$k$</strong> : Growth rate constant ($\text{wk}^{-1}$)</div>
+                        <div><strong>$t_0$</strong> : Inflection point of peak rate (wk)</div>
+                    </div>
+                </div>
+
+                <!-- Live Parameter Modification Controls -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                            </svg>
+                            Agronomic Variables
+                        </h3>
+                        <button onclick="resetSliders()" class="text-xs font-semibold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 transition">
+                            Reset Defaults
+                        </button>
+                    </div>
+
+                    <div class="space-y-5">
+                        <!-- Max Weight Slider -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="font-medium text-slate-700">Max Bunch Weight ($L$)</span>
+                                <span class="font-bold text-emerald-800" id="lVal">24.0 kg</span>
+                            </div>
+                            <input type="range" id="paramL" min="15" max="35" step="0.5" value="24" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-700">
+                            <p class="text-[11px] text-slate-400 mt-1">Dependent on soil nutrition (e.g. NPK fertilization on Ultisols and Oxisols in Malaysia).</p>
+                        </div>
+
+                        <!-- Growth Coefficient Slider -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="font-medium text-slate-700">Growth Rate Constant ($k$)</span>
+                                <span class="font-bold text-emerald-800" id="kVal">0.36 wk⁻¹</span>
+                            </div>
+                            <input type="range" id="paramK" min="0.20" max="0.60" step="0.02" value="0.36" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-700">
+                            <p class="text-[11px] text-slate-400 mt-1">Determined by hybrid variety (DxP Tenera displays highly efficient enzyme-mediated cell division).</p>
+                        </div>
+
+                        <!-- Inflection Point Slider -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="font-medium text-slate-700">Max Growth Week ($t_0$)</span>
+                                <span class="font-bold text-emerald-800" id="t0Val">12.0 Weeks</span>
+                            </div>
+                            <input type="range" id="paramT0" min="8" max="15" step="0.5" value="12" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-700">
+                            <p class="text-[11px] text-slate-400 mt-1">The age where the FFB switches from cellular expansion to lipid/oil accumulation.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Side: Graphic Visualizer & Interactive Analysis Card -->
+            <div class="lg:col-span-7 flex flex-col gap-6">
+                
+                <!-- Graphic Display -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900">FFB Growth Phase Visualizer</h3>
+                            <p class="text-xs text-slate-500">Click anywhere along the chart to run dynamic differential calculus!</p>
+                        </div>
+                        <div class="flex items-center gap-3 self-stretch sm:self-auto text-xs">
+                            <div class="flex items-center gap-1">
+                                <span class="w-3 h-3 rounded-full bg-emerald-600 block"></span>
+                                <span class="text-slate-600 font-medium">$f(t)$ Weight</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="w-3 h-3 rounded-full bg-amber-500 block"></span>
+                                <span class="text-slate-600 font-medium">$f'(t)$ Growth Rate</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative w-full h-[350px] bg-slate-50 rounded-xl p-2 border border-slate-100 flex items-center justify-center">
+                        <canvas id="growthChart"></canvas>
+                    </div>
+
+                    <div class="mt-3 text-center">
+                        <p class="text-xs text-slate-400 italic">
+                            X-axis represents weeks after anthesis (pollination). Standard harvesting in Malaysia occurs around week 20–22.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Interactive Analysis Output Card -->
+                <div class="bg-slate-900 text-white rounded-2xl shadow-lg p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-32 w-32" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+                            <span class="text-xs font-semibold text-emerald-400 uppercase tracking-widest">Calculus & Physiological Interpreter</span>
+                            <span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/30" id="selected-week-pill">
+                                Selected: Week 12.0
+                            </span>
+                        </div>
+
+                        <!-- Mathematical Computation Results -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-center sm:text-left">
+                            <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-800">
+                                <div class="text-[10px] text-slate-400 uppercase font-semibold">Weeks Past Anthesis ($t$)</div>
+                                <div class="text-lg font-bold text-white mt-1" id="out-t">12.0 weeks</div>
+                            </div>
+                            <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-800">
+                                <div class="text-[10px] text-slate-400 uppercase font-semibold">Total Weight $f(t)$</div>
+                                <div class="text-lg font-bold text-emerald-400 mt-1" id="out-y">12.00 kg</div>
+                            </div>
+                            <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-800">
+                                <div class="text-[10px] text-slate-400 uppercase font-semibold">Derivative Rate $f'(t)$</div>
+                                <div class="text-lg font-bold text-amber-400 mt-1" id="out-dy">2.16 kg/wk</div>
+                            </div>
+                            <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-800">
+                                <div class="text-[10px] text-slate-400 uppercase font-semibold">Daily Intake Equivalent</div>
+                                <div class="text-lg font-bold text-blue-400 mt-1" id="out-daily">~309 g/day</div>
+                            </div>
+                        </div>
+
+                        <!-- Bio explanation -->
+                        <div class="bg-slate-800/30 border border-slate-800 p-4 rounded-xl">
+                            <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0y" />
+                                </svg>
+                                Layman's Agronomic Explanation:
+                            </h4>
+                            <p class="text-xs sm:text-sm text-slate-200 leading-relaxed font-light" id="layman-expl">
+                                Click any point on the chart to inspect cellular mechanics and agricultural harvesting actions at that specific week!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Analytical Explanations and Malaysian Agrotech Deep Dive -->
+        <section class="mt-12 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <h3 class="text-xl font-bold text-slate-900 mb-6">Bioscience Field Report: The Role of Derivatives in Harvesting Oil Palm</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                        <span class="w-1.5 h-4 bg-emerald-600 rounded-full"></span>
+                        1. Lag Phase: Days 0 - 56 (Weeks 0 - 8)
+                    </h4>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Immediately after pollination, cell division is the main physiological mechanism. Because cells are multiplying but not expanding, 
+                        the total weight of the bunch remains very low ($f(t) \approx 0.5 \text{ kg}$ to $3 \text{ kg}$). The rate of growth represented by the derivative 
+                        $f'(t)$ stays highly minimal and close to zero. Harvesting at this stage yields zero commercial oil.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                        <span class="w-1.5 h-4 bg-amber-500 rounded-full"></span>
+                        2. Linear Growth Peak: Days 56 - 112 (Weeks 8 - 16)
+                    </h4>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        At around Week 11–13, the fruit enters the **inflection point** ($t_0$). In Malaysia's wet, high-intensity sunlight environment, 
+                        bunch enzymes accelerate carbohydrate conversion and cellular enlargement. The rate of weight accumulation peaks here, represented 
+                        mathematically by the maximum value of $f'(t)$ (where the second derivative is zero, $f''(t) = 0$). Growth reaches up to $2.2 \text{ kg/week}$.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                        <span class="w-1.5 h-4 bg-red-600 rounded-full"></span>
+                        3. Plateau & Oil Synthesis: Days 112+ (Weeks 16+)
+                    </h4>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Although the physical size of the bunch stops expanding ($f(t)$ plateaus and $f'(t)$ drops down towards $0$), an invisible chemical growth occurs. 
+                        Free Fatty Acids convert to neutral triacylglycerols (crude palm oil) within the mesocarp. Harvesting should occur exactly when $f'(t)$ drops close to 
+                        zero, meaning resources are no longer wasted on vegetative weight, and oil content has matured perfectly.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 text-slate-400 py-6 mt-12 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p>&copy; 2026 SFA Agrotech Educational Software Hub. Developed for Malaysian Biosciences.</p>
+            <div class="flex gap-4">
+                <span class="hover:text-white cursor-pointer transition">MPOB Standardization Rules v20.2</span>
+                <span>&bull;</span>
+                <span class="hover:text-white cursor-pointer transition">MARDI Agritech Syllabus Reference</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Interactive JS Script Logic -->
+    <script>
+        // Select DOM Elements
+        const sliderL = document.getElementById('paramL');
+        const sliderK = document.getElementById('paramK');
+        const sliderT0 = document.getElementById('paramT0');
+
+        const labelL = document.getElementById('lVal');
+        const labelK = document.getElementById('kVal');
+        const labelT0 = document.getElementById('t0Val');
+
+        const outT = document.getElementById('out-t');
+        const outY = document.getElementById('out-y');
+        const outDy = document.getElementById('out-dy');
+        const outDaily = document.getElementById('out-daily');
+        const selectedWeekPill = document.getElementById('selected-week-pill');
+        const laymanExpl = document.getElementById('layman-expl');
+
+        let chart;
+        let selectedIndex = 12; // Initial state (Week 12)
+
+        // Reset to scientific defaults
+        function resetSliders() {
+            sliderL.value = 24;
+            sliderK.value = 0.36;
+            sliderT0.value = 12;
+            updateParams();
+        }
+
+        // Mathematical Equations
+        // Logistic growth curve: f(t) = L / (1 + exp(-k * (t - t0)))
+        function logisticWeight(t, L, k, t0) {
+            return L / (1 + Math.exp(-k * (t - t0)));
+        }
+
+        // First derivative: f'(t) = (L * k * exp(-k*(t - t0))) / (1 + exp(-k*(t - t0)))^2
+        function growthRate(t, L, k, t0) {
+            const expTerm = Math.exp(-k * (t - t0));
+            const denom = 1 + expTerm;
+            return (L * k * expTerm) / (denom * denom);
+        }
+
+        // Layman Explanations Generator based on growth stage
+        function generateLaymanExplanation(t, weight, rate, L, t0) {
+            if (t < 5) {
+                return `**Lag Phase (Initial Cellular Division):** The bunch is extremely young (just completed pollination). At $t = ${t.toFixed(1)}$ weeks, the weight is only $f(t) = ${weight.toFixed(2)}$ kg, growing at a snail's pace of $f'(t) = ${rate.toFixed(2)}$ kg/week. Cellular division inside the ovaries is occurring, but no fruit oil is being synthesized. Harvesting is structurally invalid.`;
+            } else if (t >= 5 && t < 10) {
+                return `**Early Exponential Phase:** At $t = ${t.toFixed(1)}$ weeks, structural foundations are laying. The fresh fruit bunch is gaining visible shape. It is currently accumulating weight at $f'(t) = ${rate.toFixed(2)}$ kg/week. You can see the derivative curve ramping up steeply. Plant carbohydrates are flowing from the fronds to fuel cellular swelling.`;
+            } else if (t >= 10 && t < 14) {
+                const isPeak = Math.abs(t - t0) < 0.6;
+                let peakMsg = isPeak ? `**The Peak Inflection Point ($t_0$):** ` : `**Rapid Exponential Growth Phase:** `;
+                return `${peakMsg}At $t = ${t.toFixed(1)}$ weeks, the growth rate reaches an astonishing $f'(t) = ${rate.toFixed(2)}$ kg/week. This represents the peak biological vigor of the crop bunch where derivative growth rate is maximized! Cellular structures are swelling to maximum sizes. Malaysia's high solar radiation and NPK fertilizer applications are absolutely critical at this step to prevent stunted growth.`;
+            } else if (t >= 14 && t < 18) {
+                return `**Deceleration Phase (Fruit Structural Fill):** Total weight is approaching maximum capacity ($f(t) = ${weight.toFixed(2)}$ kg), but the derivative growth rate has started slowing down ($f'(t) = ${rate.toFixed(2)}$ kg/week). The plant is shifting resources from building fiber tissue and fruit size to preparing for seed maturation and chemical oil storage.`;
+            } else {
+                return `**Plateau / Optimal Harvest Window:** At $t = ${t.toFixed(1)}$ weeks, the derivative rate has dropped to a low $f'(t) = ${rate.toFixed(2)}$ kg/week, and total cumulative weight plateaus at a heavy $f(t) = ${weight.toFixed(2)}$ kg (approaching the maximum threshold of $L = ${L}$ kg). Even though weight growth is slowing down, oil synthesis inside the pulp is peaking. The fruit turns vibrant reddish-orange, indicating ripeness. Malaysian workers will look for 1-5 detached fruits per bunch on the ground to trigger immediate harvest!`;
+            }
+        }
+
+        // Build the dataset arrays
+        function generateData() {
+            const L = parseFloat(sliderL.value);
+            const k = parseFloat(sliderK.value);
+            const t0 = parseFloat(sliderT0.value);
+
+            const labels = [];
+            const weightData = [];
+            const rateData = [];
+
+            // Generate data from week 0 to 22 in steps of 0.5 for smoother curves
+            for (let t = 0; t <= 22; t += 0.5) {
+                labels.push(t);
+                weightData.push(logisticWeight(t, L, k, t0));
+                rateData.push(growthRate(t, L, k, t0));
+            }
+
+            return { labels, weightData, rateData };
+        }
+
+        // Update calculations and UI elements on specific state change
+        function updateDisplayValues() {
+            const L = parseFloat(sliderL.value);
+            const k = parseFloat(sliderK.value);
+            const t0 = parseFloat(sliderT0.value);
+
+            // Compute current point values based on selectedIndex
+            const t = selectedIndex;
+            const weight = logisticWeight(t, L, k, t0);
+            const rate = growthRate(t, L, k, t0);
+            const dailyRate = (rate * 1000) / 7; // Convert kg/week to grams/day
+
+            // Update Text Elements
+            outT.innerHTML = `${t.toFixed(1)} <span class="text-xs text-slate-400">weeks</span>`;
+            outY.innerHTML = `${weight.toFixed(2)} <span class="text-xs text-slate-400">kg</span>`;
+            outDy.innerHTML = `${rate.toFixed(2)} <span class="text-xs text-slate-400">kg/wk</span>`;
+            outDaily.innerHTML = `~${Math.round(dailyRate)} <span class="text-xs text-slate-400">g/day</span>`;
+            selectedWeekPill.innerText = `Selected: Week ${t.toFixed(1)}`;
+            
+            // Generate layman narrative
+            laymanExpl.innerHTML = generateLaymanExplanation(t, weight, rate, L, t0);
+
+            // Trigger MathJax typeset to render LaTeX inside layman output
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise();
+            }
+        }
+
+        // Draw and Update Chart.js
+        function updateParams() {
+            // Read parameters from UI
+            const L = parseFloat(sliderL.value);
+            const k = parseFloat(sliderK.value);
+            const t0 = parseFloat(sliderT0.value);
+
+            // Update slider textual display
+            labelL.innerText = `${L.toFixed(1)} kg`;
+            labelK.innerText = `${k.toFixed(2)} wk⁻¹`;
+            labelT0.innerText = `${t0.toFixed(1)} Weeks`;
+
+            // Calculate new datasets
+            const { labels, weightData, rateData } = generateData();
+
+            // Refresh Chart.js data elements
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = weightData;
+            chart.data.datasets[1].data = rateData;
+            chart.update('none'); // Update without full layout recalculations for speed
+
+            // Update interactive values block
+            updateDisplayValues();
+        }
+
+        // Initialize Chart
+        function initChart() {
+            const ctx = document.getElementById('growthChart').getContext('2d');
+            const { labels, weightData, rateData } = generateData();
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'FFB Weight f(t) (kg)',
+                            data: weightData,
+                            borderColor: '#059669', // Emerald 600
+                            backgroundColor: 'rgba(5, 150, 105, 0.05)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.2,
+                            yAxisID: 'yWeight',
+                            pointRadius: function(context) {
+                                // Highlight selected week point
+                                const val = context.chart.data.labels[context.dataIndex];
+                                return val === selectedIndex ? 8 : 1;
+                            },
+                            pointBackgroundColor: '#047857',
+                            pointHoverRadius: 8
+                        },
+                        {
+                            label: "Growth Rate f'(t) (kg/week)",
+                            data: rateData,
+                            borderColor: '#f59e0b', // Amber 500
+                            borderDash: [5, 5],
+                            borderWidth: 2,
+                            tension: 0.2,
+                            yAxisID: 'yRate',
+                            pointRadius: function(context) {
+                                const val = context.chart.data.labels[context.dataIndex];
+                                return val === selectedIndex ? 8 : 1;
+                            },
+                            pointBackgroundColor: '#d97706',
+                            pointHoverRadius: 8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: false // Using custom legend in UI
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toFixed(2);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time After Anthesis (Weeks)',
+                                color: '#475569',
+                                font: {
+                                    weight: 'bold',
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.1)'
+                            }
+                        },
+                        yWeight: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Cumulative Weight (kg)',
+                                color: '#059669',
+                                font: {
+                                    weight: 'bold',
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.1)'
+                            },
+                            min: 0,
+                            max: 40
+                        },
+                        yRate: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Growth Rate (kg/week)',
+                                color: '#f59e0b',
+                                font: {
+                                    weight: 'bold',
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                drawOnChartArea: false // prevent grid line clutter
+                            },
+                            min: 0,
+                            max: 4
+                        }
+                    },
+                    onClick: (e) => {
+                        const points = chart.getElementsAtEventForMode(e, 'index', { intersect: false }, true);
+                        if (points.length > 0) {
+                            const index = points[0].index;
+                            selectedIndex = chart.data.labels[index];
+                            updateParams();
+                        }
+                    }
+                }
+            });
+        }
+
+        // Attach listener actions to control elements
+        sliderL.addEventListener('input', updateParams);
+        sliderK.addEventListener('input', updateParams);
+        sliderT0.addEventListener('input', updateParams);
+
+        // Run application setup
+        window.onload = function() {
+            initChart();
+            updateParams();
+        };
+    </script>
+</body>
+</html>
